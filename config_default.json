@@ -1,0 +1,20 @@
+{
+    "host": "0.0.0.0",
+    "port": "9095",
+    "video-source": "rtsp://<USERNAME>:<PASSWORD>@<HOST>:<PORT>/<CUSTOM-PATH>",
+    "video-source-fps": 30.0,
+    "video-source-width": 1920,
+    "video-source-height": 1080,  
+    "record-path": "TODO",
+    "highlights-highscore-on": 140,
+    "highlights-highfinish-on": 100,
+    "highlights-time-offset-before": 3,
+    "highlights-time-offset-after": 10,
+    "onvif-ptz-camera": false,
+    "onvif-ptz-camera-host": "TODO",
+    "onvif-ptz-camera-port": 100,
+    "onvif-ptz-camera-user": "TODO",
+    "onvif-ptz-camera-password": "TODO",
+    "onvif-ptz-camera-preset-default": 11,
+    "onvif-ptz-camera-preset-zoom": 10
+}
