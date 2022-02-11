@@ -31,7 +31,7 @@ class AutodartsHighlights(threading.Thread):
         if self.__onvif_ptz_camera == True:
             self.__ptz_camera = ONVIFCameraControl((config["onvif-ptz-camera-host"], config["onvif-ptz-camera-port"]), config["onvif-ptz-camera-user"], config["onvif-ptz-camera-password"])
             self.__onvif_ptz_camera_preset_default = config["onvif-ptz-camera-preset-default"]
-            self.__onvif_ptz_camera_preset_zoom_triple_20 = config["onvif-ptz-camera-preset-zoom"]
+            self.__onvif_ptz_camera_preset_zoom = config["onvif-ptz-camera-preset-zoom"]
             # print(self.__ptz_camera.get_presets())
         
         self.__highlight_highscore_on = config["highlights-highscore-on"]
@@ -39,6 +39,7 @@ class AutodartsHighlights(threading.Thread):
         self.__highlight_time_offset_before = config["highlights-time-offset-before"]
         self.__highlight_time_offset_after = config["highlights-time-offset-after"]
         self.__highlight_started_timestamp = None
+        self.__highlight_thrower = ""
         self.__highlight_turn_points = 0
         self.__highlight_turn_throw_number = 0
 
@@ -53,7 +54,7 @@ class AutodartsHighlights(threading.Thread):
         if self.__record_state == False:
             self.__set_ptz_camera_default()
             self.__record_state = True
-            self.__record_started_timestamp = datetime.now()
+            self.__record_started_timestamp = self.__get_timestamp()
             self.__record_output = self.__record_path + str(self.__record_started_timestamp).replace(":", "-")
             print('>>> Start recording ' + self.__record_output)
 
@@ -89,59 +90,54 @@ class AutodartsHighlights(threading.Thread):
     def analyze_throw(self, thrower, throw_number, throw_points, points_left):
         throw_number = int(throw_number)
         throw_points = int(throw_points)
+        points_left = int(points_left)
 
+        self.__highlight_thrower = thrower
         self.__highlight_turn_throw_number = throw_number
         self.__highlight_turn_points += throw_points
 
-        print('>>> TURN-THROW-NUMBER: ' + str(self.__highlight_turn_throw_number))
-        print('>>> TURN-TURN-POINTS: ' + str(self.__highlight_turn_points))
+        print('>>> throw-number: ' + str(self.__highlight_turn_throw_number))
+        print('>>> turn-points: ' + str(self.__highlight_turn_points))
+        print('>>> points-left: ' + str(points_left))
         
-        if self.__highlight_started_timestamp == None:
-            self.__highlight_started_timestamp = datetime.now()
-            print('>>> Start possible highlight')
-
-        if self.__highlight_turn_points >= self.__highlight_highscore_on:
-            highlight_ended_timestamp = datetime.now()
-
-            print('>>> Boom Highscore-Highlight: ' + str(self.__highlight_turn_points))
-            self.__highlight_turn_points = 0
-
-            self.__set_ptz_camera_highlight()
+        highlight_occured = self.__check_for_highlight_highfinish(throw_number, points_left)
+        if highlight_occured == False:
+            self.__check_for_highlight_highscore(throw_number)
             
-            # Proceed video record as long as the clip should be after the highlight
-            time.sleep(self.__highlight_time_offset_after + 2)
-            self.__record_state = False
-            time.sleep(2.0)
-            
-            # Extract clip
-            self.__extract_confirmed_highlight(highlight_ended_timestamp)
-            
-            # Remove non needed recording
-            self.__delete_recording()
-
-            # Start new fresh recording
-            self.record()
-        else:
-            print('>>> Too bad')
-
-        if throw_number == 3:
-            self.__highlight_turn_points = 0
-
-
 
     def __set_ptz_camera_default(self):
         if self.__onvif_ptz_camera == True:
             print('>>> Set PTZ-Camera to default')
             self.__ptz_camera.goto_preset(self.__onvif_ptz_camera_preset_default)
 
-
     def __set_ptz_camera_highlight(self):
         if self.__onvif_ptz_camera == True:
             print('>>> Set PTZ-Camera to highlight')
-            self.__ptz_camera.goto_preset(self.__onvif_ptz_camera_preset_zoom_triple_20)
+            self.__ptz_camera.goto_preset(self.__onvif_ptz_camera_preset_zoom)
 
-    def __extract_confirmed_highlight(self, highlight_ended_timestamp):
+    def __process_highlight(self, thrower, highlight_type):
+        highlight_ended_timestamp = self.__get_timestamp()
+
+        print('>>> Boom ' + highlight_type + ': ' + str(self.__highlight_turn_points))
+        self.__highlight_turn_points = 0
+
+        self.__set_ptz_camera_highlight()
         
+        # Proceed video record as long as the clip should be after the highlight
+        time.sleep(self.__highlight_time_offset_after + 2)
+        self.__record_state = False
+        time.sleep(2.0)
+        
+        # Extract clip
+        self.__extract_confirmed_highlight(thrower, highlight_ended_timestamp, highlight_type)
+        
+        # Remove non needed recording
+        self.__delete_recording()
+
+        # Start new fresh recording
+        self.record()
+
+    def __extract_confirmed_highlight(self, thrower, highlight_ended_timestamp, highlight_type):
         try:
             if self.__highlight_started_timestamp != None and highlight_ended_timestamp != None:
                 highlight_duration = int((highlight_ended_timestamp-self.__highlight_started_timestamp).total_seconds())
@@ -153,7 +149,7 @@ class AutodartsHighlights(threading.Thread):
                 end = start_highlight_timestamp + highlight_duration + self.__highlight_time_offset_after
 
                 subclip = clip.subclip(start, end)
-                subclip.write_videofile(self.__record_output + "_highlight.mp4")
+                subclip.write_videofile(self.__record_output + "_" + thrower + "_" + highlight_type + ".mp4")
             else:
                 print('>>> Recording is too short to clip, skip')
         except:
@@ -161,11 +157,35 @@ class AutodartsHighlights(threading.Thread):
         finally:
             self.__highlight_started_timestamp = None
 
+    def __check_for_highlight_highscore(self, throw_number):
+        if self.__highlight_started_timestamp == None or throw_number == 1:
+            self.__highlight_started_timestamp = self.__get_timestamp()
+            print('>>> Start possible highlight')
+
+        if self.__highlight_turn_points >= self.__highlight_highscore_on:
+            self.__process_highlight(self.__highlight_thrower, "Highscore")
+        else:
+            print('>>> Too bad for Highscore')
+
+        if throw_number == 3:
+            self.__highlight_turn_points = 0
+
+    def __check_for_highlight_highfinish(self, throw_number, points_left):
+        if points_left == 0 and self.__highlight_turn_points >= self.__highlight_highfinish_on:
+            self.__process_highlight(self.__highlight_thrower, "Highfinish")
+            return True
+        else:
+            print('>>> Too bad for Highfinish')
+            return False
+
     def __delete_recording(self):
         try:
             os.remove(self.__record_output + self.__record_format)
         except:
             return
+
+    def __get_timestamp(self):
+        return datetime.now().replace(microsecond=0)
 
 
 @app.route('/leg_started')
@@ -175,7 +195,7 @@ def leg_started():
 
 @app.route('/leg_ended')
 def leg_ended():
-    autodarts_highlights.stop_record()
+    # autodarts_highlights.stop_record()
     return "200"
 
 @app.route('/throw/<thrower>/<throw_number>/<throw_points>/<points_left>')

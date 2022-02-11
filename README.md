@@ -30,22 +30,24 @@ Go to download-directory and type:
 
 Make a copy of 'config_default.json' and name it 'config.json'. Open it and fill up all entries with your specific values. Below you can find some explaination:
 
-- host: In most cases that should be "0.0.0.0"
-- port: Just choose a port that is not used by other applications, ie. "9095"
-- video-source: It can be 0 or a network-path to your camera
-- video-source-fps: It should represent the frames per second that your camera is able to produce
-- video-source-width: The width for records/clips 
-- video-source-height: The height for records/clips 
-- record-path: Absolute path for recording-files. If the path not exists, the application will create it for you
-- highlights-time-offset-before: Represents the time in seconds that should be recorded before a highlight starts
-- highlights-time-offset-after: Represents the time in seconds that should be recorded after a highlight occured
-- onvif-ptz-camera: If you got onvif controllable ptz-camera, you can activate it here. Possible value [true or false]
-- onvif-ptz-camera-host: onvif host-address of your camera
-- onvif-ptz-camera-port: onvif port of your camera (int),
-- onvif-ptz-camera-user: onvif username to access your camera,
-- onvif-ptz-camera-password: onvif password to access your camera,
-- onvif-ptz-camera-preset-default: default-park-preset for recording (int)
-- onvif-ptz-camera-preset-zoom: zoom-preset-number for zooming after a highlight occured (int)
+- host (String): In most cases that should be "0.0.0.0"
+- port (String): Just choose a port that is not used by other applications, ie. "9095"
+- video-source (Int or String): It can be 0 or a network-path to your camera
+- video-source-fps (Float): It should represent the frames per second that your camera is able to produce 
+- video-source-width (Int): The width for records/clips 
+- video-source-height (Int): The height for records/clips 
+- record-path (String): Absolute path for recording-files. If the path not exists, the application will create it for you
+- highlights-highscore-on (Int): Score-value that is a Highscore in your opinion 
+- highlights-highfinish-on (Int): Score-value that is a Highfinish in your opinion 
+- highlights-time-offset-before (Int): Represents the time in seconds that should be recorded before a highlight starts
+- highlights-time-offset-after (Int): Represents the time in seconds that should be recorded after a highlight occured
+- onvif-ptz-camera (Boolean): If you got onvif controllable ptz-camera, you can activate it here
+- onvif-ptz-camera-host (String): onvif host-address of your camera
+- onvif-ptz-camera-port (Int): onvif port of your camera
+- onvif-ptz-camera-user (String): onvif username to access your camera
+- onvif-ptz-camera-password (String): onvif password to access your camera
+- onvif-ptz-camera-preset-default (Int): default-park-preset for recording
+- onvif-ptz-camera-preset-zoom (Int): zoom-preset-number for zooming after a highlight occured
 
 
 ## RUN IT
