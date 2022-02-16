@@ -1,0 +1,33 @@
+html{
+    width: 100%; 
+    height: 100%; 
+    margin: 0 auto;
+    text-align: center;
+    background: linear-gradient(90deg, #FDBB2D 0%, #3A1C71 100%);
+}
+
+input[type=button], input[type=submit]{
+    display: block;
+    width: 30%; 
+    height: 100px;
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    text-decoration: none;
+    margin: 70px auto 0px auto;
+    cursor: pointer;
+    font-size: 25pt;
+    border-radius: 25pt;    
+}
+
+.video-mask{
+    width: 80%;
+    border-radius: 20px; 
+    overflow: hidden; 
+    margin: 0 auto;
+    margin-bottom: 30px;
+}
+
+
+

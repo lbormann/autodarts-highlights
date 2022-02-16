@@ -1,0 +1,29 @@
+<html !doctype>
+    <head>
+        <link rel="stylesheet" href="/static/css/style.css?v=1.0.42">
+    </head>
+
+    <body>
+        
+        {% if recording == true %}
+            <form action="#" method="POST">
+                <input type="submit" value="Stop Recording">
+            </form>
+        {% else %}
+            <form action="#" method="POST">
+                <input type="submit" value="Start Recording">
+            </form>
+        {% endif %}
+
+        {% for c in clips %}
+            <div class="video-mask">
+                <video width="100%" height="auto" controls >
+                    <source src="{{ url_for('clips', clip_id=c) }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        {% endfor %}
+        
+    </body>
+
+</html>
