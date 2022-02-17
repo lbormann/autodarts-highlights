@@ -1,33 +1,47 @@
 <html !doctype>
     <head>
-        <link rel="stylesheet" href="/static/css/style.css?v=1.0.43">
+        <link rel="stylesheet" href="/static/css/style.css?v=1.0.47">
     </head>
 
     <body>
         
         {% if recording == true %}
-            <form action="#" method="POST">
+            <form name="record_start_stop" action="#" method="POST">
                 <input type="submit" value="Stop Recording">
             </form>
         {% else %}
-            <form action="#" method="POST">
+            <form name="record_start_stop" action="#" method="POST">
                 <input type="submit" value="Start Recording">
             </form>
         {% endif %}
 
+        <hr>
+
         {% for r in recordings %}
-            <div>
+
                 <h1>{{ r['path'] }}</h1>
+
                 {% for c in r['clips'] %}
-                    <div class="video-mask">
-                        <h3>{{ c['file'] }}</h3>
-                        <video width="100%" height="auto" controls>
-                            <source src="{{ url_for('clips', record_id=r['path'], clip_id=c['file']) }}" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
+
+                    {% if c['exists'] == True %}
+                        <div class="video-mask">
+                            <h3>{{ c['file'] }}</h3>
+                            <video width="100%" height="auto" controls>
+                                <source src="{{ url_for('clips', record_id=r['path'], clip_id=c['file']) }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    {% else %}
+                        <div>
+                            <form name="record_start_stop" action="#" method="POST">
+                                <input name="clip_id" type="hidden" value="{{ c['file'] }}" >
+                                <input class="generate" type="submit" value="Generate {{ c['file'] }} ">
+                            </form>
+                        </div>
+                    {% endif %}
+
                 {% endfor %}
-            </div>
+            
             <hr>
         {% endfor %}
         

@@ -2,7 +2,6 @@
     "host": "0.0.0.0",
     "port": "9095",
     "record-path": "<Absolute-path-where-the-application-can-store-record-files>",
-    "clip-path": "<Absolute-path-where-the-application-can-store-clip-files>",
     "clip-generation-sounds-path": "<Absolute-path-where-the-application-can-find-sound-files>",
     "highlights-highscore-on": 140,
     "highlights-highfinish-on": 100,

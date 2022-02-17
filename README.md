@@ -83,9 +83,9 @@ It may be buggy. I've just coded it for fast fun with autodarts.io. You can give
 - X change clip-file name to: timestamp_thrower_variant_type_value
 - X change default constant clip-path to record-path to know where the clips come from easily
 - Let the user re-generate a highlight-clip
-- let the user change latence when its not sync
-- Let the user change turn-value when its wrong
-- Let the user delete a highlight-clip
+    - let the user change latence when its not sync (for every dart)
+    - Let the user change turn-value when its wrong
+    - Let the user delete (hide/show) a highlight-clip
 - maybe combine AC with AH to one application?
 - parallize highlight-clip-generation instead of each recording one-by-one
 - Add latence to config

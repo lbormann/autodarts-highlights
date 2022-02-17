@@ -8,8 +8,8 @@ html{
 
 input[type=button], input[type=submit]{
     display: block;
-    width: 30%; 
-    height: 100px;
+    width: auto; 
+    height: auto;
     background-color: #4CAF50;
     border: none;
     color: white;
@@ -19,6 +19,11 @@ input[type=button], input[type=submit]{
     cursor: pointer;
     font-size: 25pt;
     border-radius: 25pt;    
+}
+
+.generate{
+    background-color: orange !important;
+    padding: 8px 24px !important;
 }
 
 .video-mask{

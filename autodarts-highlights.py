@@ -1,7 +1,6 @@
 import os
 import glob
 from os import path
-from pathlib import Path
 import platform
 import threading
 import json
@@ -9,19 +8,18 @@ from datetime import date, datetime
 from moviepy.editor import *
 import unicodedata
 import re
-
+import cv2
+from ONVIFCameraControl import ONVIFCameraControl
 from flask import Flask, request, redirect, url_for, render_template, send_from_directory
 app = Flask(__name__)
 
-import cv2
-import time
-from ONVIFCameraControl import ONVIFCameraControl
 
 
 VERSION = '0.9.0'
 DEBUG = True
 RECORD_FORMAT = ".avi"
 CLIP_FORMAT = ".mp4"
+HIGHLIGHTS_FILE_NAME = "highlights.json"
 
 
 def slugify(value, allow_unicode=False):
@@ -43,11 +41,22 @@ def slugify(value, allow_unicode=False):
 def get_timestamp():
     return datetime.now().replace(microsecond=0)
 
+def get_date_time_from_iso_json(date_time_iso_json):
+    return datetime.strptime(date_time_iso_json, "%Y-%m-%dT%H:%M:%S")
+
 def json_serial(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError ("Type %s not serializable" % type(obj))
 
+def get_clip_file_name(highlight_json):
+    highlight_started_timestamp = get_date_time_from_iso_json(highlight_json['ts-start'])
+    thrower = highlight_json['user']
+    variant = highlight_json['variant']
+    highlight_type = highlight_json['type']
+    highlight_value = highlight_json['value']
+    return slugify(str(highlight_started_timestamp).replace(":", "-") + "_" + thrower + "_" + variant + "_" + highlight_type + "_" + str(highlight_value))
+        
 
 
 class HighlightClipper(threading.Thread):
@@ -72,13 +81,10 @@ class HighlightClipper(threading.Thread):
                 self.__is_first_video_clip_of_array = True
                 self.__generate_highlight_clip(hl, file_data["video-sources"], latest_start_timestamp)
 
-    def __date_time_from_iso_json(self, date_time_iso_json):
-        return datetime.strptime(date_time_iso_json, "%Y-%m-%dT%H:%M:%S")
-
     def __get_video_source_started_most_late(self, vss):
-        latest_vs = self.__date_time_from_iso_json(vss[0]['ts-start'])
+        latest_vs = get_date_time_from_iso_json(vss[0]['ts-start'])
         for vs in vss:
-            c_vs = self.__date_time_from_iso_json(vs['ts-start'])
+            c_vs = get_date_time_from_iso_json(vs['ts-start'])
             if c_vs > latest_vs:
                 latest_vs = c_vs
         return latest_vs
@@ -101,13 +107,7 @@ class HighlightClipper(threading.Thread):
             clips.append(self.__generate_clip_of_video_source(highlight, vs, latest_start_timestamp))
         final_clip = clips_array([clips])
 
-        # Get relevant vars
-        highlight_started_timestamp = self.__date_time_from_iso_json(highlight['ts-start'])
-        thrower = highlight['user']
-        variant = highlight['variant']
-        highlight_type = highlight['type']
-        highlight_value = highlight['value']
-        clip_file_name = slugify(str(highlight_started_timestamp).replace(":", "-") + "_" + thrower + "_" + variant + "_" + highlight_type + "_" + str(highlight_value))
+        clip_file_name = get_clip_file_name(highlight)
             
         # Compose clip destination file-path
         clip_file_path = os.path.dirname(os.path.abspath(self.__highlight_file))
@@ -120,15 +120,15 @@ class HighlightClipper(threading.Thread):
         
     def __generate_clip_of_video_source(self, highlight, vs, latest_start_timestamp):           
         record_file_name = vs['file-name']
-        record_started_timestamp = self.__date_time_from_iso_json(vs['ts-start'])
+        record_started_timestamp = get_date_time_from_iso_json(vs['ts-start'])
         diff = int((latest_start_timestamp - record_started_timestamp).total_seconds())
 
         # synchronize: diff to latest started video-source
         if diff != 0:
             diff = diff - 1.20
 
-        highlight_started_timestamp = self.__date_time_from_iso_json(highlight['ts-start'])
-        highlight_ended_timestamp = self.__date_time_from_iso_json(highlight['ts-end'])
+        highlight_started_timestamp = get_date_time_from_iso_json(highlight['ts-start'])
+        highlight_ended_timestamp = get_date_time_from_iso_json(highlight['ts-end'])
         highlight_duration = int((highlight_ended_timestamp-highlight_started_timestamp).total_seconds())
 
         start_highlight_timestamp = int((highlight_started_timestamp-record_started_timestamp).total_seconds())
@@ -142,11 +142,11 @@ class HighlightClipper(threading.Thread):
         # print('>>> ' + str(start))
         # print('>>> ' + str(end))
 
-        video_source_name = vs['name']
+        # video_source_name = vs['name']
         video_source_purpose = vs['purpose']
         video_source_invert = vs['invert-image']
-        variant = highlight['variant']
-        thrower = highlight['user']
+        # variant = highlight['variant']
+        # thrower = highlight['user']
         highlight_type = highlight['type']
         highlight_value = highlight['value']
 
@@ -192,7 +192,7 @@ class HighlightClipper(threading.Thread):
 
                 # For each thrown dart
                 for i, kp in enumerate(highlight['key-points']):
-                    ts = self.__date_time_from_iso_json(kp['ts'])
+                    ts = get_date_time_from_iso_json(kp['ts'])
                     tss = int((ts-record_started_timestamp).total_seconds())
                     go = tss + diff
                     
@@ -206,9 +206,9 @@ class HighlightClipper(threading.Thread):
             else:
                 self.__printv('Warning: ouh-sound-file or hit-sound-file not found, skip')
 
-
-            # Add all audio parts to the clip
-            clip = clip.set_audio(CompositeAudioClip(sounds))
+            if sounds != []:
+                # Add all audio parts to the clip
+                clip = clip.set_audio(CompositeAudioClip(sounds))
 
         # Cut only highlight
         highlight_clip = clip.subclip(start, end)
@@ -332,23 +332,39 @@ class AutodartsHighlights(threading.Thread):
         records = os.listdir(self.__config['record-path'])
         records.sort()
         records.reverse()
-        # self.__printv(os.path.join(self.__config['record-path'], clip), only_debug = True)
 
         for name in records:
             full_path_recording = os.path.join(self.__config['record-path'], name)
             if os.path.isdir(full_path_recording):
 
-                clip_files = glob.glob(full_path_recording + "/*" + CLIP_FORMAT)   
-                clip_files.sort(key = os.path.getmtime)
-                clip_files.reverse()
+                # If there is no structure-json skip this recording
+                highlights_structure_path = os.path.join(full_path_recording, HIGHLIGHTS_FILE_NAME)
+                if path.exists(highlights_structure_path) == False:
+                    continue
 
+                # Generate possible names for highlight-clip-filenames
+                clips_possible = []
+                with open(highlights_structure_path, 'r') as file:
+                    highlights = json.load(file)
+                    highlights_raw = highlights["highlights"]
+
+                    for h in highlights_raw:
+                        clips_possible.append(get_clip_file_name(h))
+                    
+                    clips_possible.sort()
+                    clips_possible.reverse()
+
+                # Check which clips are already generated > create array of clips
                 clips = []
-                for c in clip_files:
-                    print(c)
+                for c in clips_possible:
+                    clip_file_name = os.path.join(full_path_recording, c + CLIP_FORMAT)
+    
                     clip = {
-                        "file": os.path.basename(c)
+                        "exists": path.exists(clip_file_name),
+                        "file": os.path.basename(clip_file_name)
                     }
                     clips.append(clip)
+                
 
                 recording = {
                     "path": os.path.basename(full_path_recording),
@@ -404,6 +420,9 @@ class AutodartsHighlights(threading.Thread):
         self.__record_state = not self.__record_state
         self.__record()
 
+    def generate_clip(self, clip_id):
+        print('Future clip generation: ' + clip_id)
+
     def get_recording_state(self):
         return self.__record_state
 
@@ -414,7 +433,7 @@ class AutodartsHighlights(threading.Thread):
                 vsi.join()
 
             self.__vsis = []
-            self.__generate_highlight_clips()
+            self.__generate_open_highlights_of_recordings()
 
         else:   
             if self.__vsis != []:
@@ -507,7 +526,7 @@ class AutodartsHighlights(threading.Thread):
             "key-points": key_points
         }
 
-        highlights_path = os.path.join(self.__record_path, "highlights.json")
+        highlights_path = os.path.join(self.__record_path, HIGHLIGHTS_FILE_NAME)
         if not os.path.exists(highlights_path):
             video_source_data = []
             for vsi in self.__vsis:
@@ -529,16 +548,16 @@ class AutodartsHighlights(threading.Thread):
         for vsi in self.__vsis:
             vsi.move_ptz_camera()
 
-    def __generate_highlight_clip(self, hlf):
+    def __generate_open_highlights_of_recording(self, hlf):
         highlight_clipper = HighlightClipper(self.__config['clip-generation-sounds-path'], 
                                             hlf, 
                                             self.__config['highlights-time-offset-before'], 
                                             self.__config['highlights-time-offset-after'])
         highlight_clipper.start()
 
-    def __generate_highlight_clips(self):
+    def __generate_open_highlights_of_recordings(self):
         for hlf in self.__highlight_files:
-            self.__generate_highlight_clip(hlf)
+            self.__generate_open_highlights_of_recording(hlf)
         self.__highlight_files.clear()
 
     def __printv(self, msg, only_debug = False):
@@ -573,7 +592,15 @@ def turn(turn_points):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        autodarts_highlights.start_stop_recording()
+        form = request.form
+        clip_id = form.get("clip_id")
+
+        if clip_id != None and clip_id != "":
+            autodarts_highlights.generate_clip(clip_id)
+        # else:
+        #     autodarts_highlights.start_stop_recording()
+            
+
         return redirect(request.referrer)
         
     is_recording = autodarts_highlights.get_recording_state()
