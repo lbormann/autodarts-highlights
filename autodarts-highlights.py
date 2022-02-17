@@ -51,11 +51,10 @@ def json_serial(obj):
 
 
 class HighlightClipper(threading.Thread):
-    def __init__(self, clip_path, sounds_path, highlight_file, offset_before, offset_after):
+    def __init__(self, sounds_path, highlight_file, offset_before, offset_after):
         threading.Thread.__init__(self)
         
         self.__clip_format = CLIP_FORMAT
-        self.__clip_path = clip_path
         self.__sounds_path = sounds_path
         self.__highlight_file = highlight_file
         self.__offset_before = offset_before
@@ -108,21 +107,11 @@ class HighlightClipper(threading.Thread):
         variant = highlight['variant']
         highlight_type = highlight['type']
         highlight_value = highlight['value']
-        clip_file_name = slugify(thrower + "_" + variant + "_" + highlight_type + "_" + str(highlight_value) + "_" + str(highlight_started_timestamp).replace(":", "-"))
+        clip_file_name = slugify(str(highlight_started_timestamp).replace(":", "-") + "_" + thrower + "_" + variant + "_" + highlight_type + "_" + str(highlight_value))
             
         # Compose clip destination file-path
-        if self.__clip_path == None or self.__clip_path == "":
-            clip_file_path = os.path.dirname(os.path.abspath(self.__highlight_file))
-            clip_file_path = os.path.join(clip_file_path, clip_file_name + self.__clip_format)
-        else:
-            if not os.path.exists(self.__clip_path):
-                try:
-                    os.makedirs(self.__clip_path)
-                except:
-                    self.__printv('Could not create clip-path. Make sure the application has write permission')
-                    return
-
-            clip_file_path = os.path.join(self.__clip_path, clip_file_name + self.__clip_format)
+        clip_file_path = os.path.dirname(os.path.abspath(self.__highlight_file))
+        clip_file_path = os.path.join(clip_file_path, clip_file_name + self.__clip_format)
 
         # .resize(width=480)
         # audio_codec='mp3'
@@ -333,54 +322,79 @@ class AutodartsHighlights(threading.Thread):
         if self.__config['start-record-on-app-start'] == True:
             self.start_stop_recording()
 
-    def list_clips(self):
-        clips = []
 
-        clip_files = glob.glob(self.__config['clip-path'] + "*" + CLIP_FORMAT)   
-        clip_files.sort(key = os.path.getmtime)
-        clip_files.reverse()
-        
-        for clip in clip_files:
-            clips.append(os.path.basename(clip))
-            self.__printv(os.path.join(self.__config['clip-path'], clip))
+    def get_record_path(self):
+        return self.__config['record-path']
 
-        return clips
+    def list_recordings(self):
+        recordings = []
+
+        records = os.listdir(self.__config['record-path'])
+        records.sort()
+        records.reverse()
+        # self.__printv(os.path.join(self.__config['record-path'], clip), only_debug = True)
+
+        for name in records:
+            full_path_recording = os.path.join(self.__config['record-path'], name)
+            if os.path.isdir(full_path_recording):
+
+                clip_files = glob.glob(full_path_recording + "/*" + CLIP_FORMAT)   
+                clip_files.sort(key = os.path.getmtime)
+                clip_files.reverse()
+
+                clips = []
+                for c in clip_files:
+                    print(c)
+                    clip = {
+                        "file": os.path.basename(c)
+                    }
+                    clips.append(clip)
+
+                recording = {
+                    "path": os.path.basename(full_path_recording),
+                    "clips": clips
+                }
+                recordings.append(recording)
+
+        return recordings
 
     def analyze_turn(self, turn_points): 
         # self.__reset_highlight_vars()
         # print('Turn ended, points: ' + str(turn_points))
         return
 
-    def analyze_throw(self, thrower, throw_number, throw_points, points_left, busted = False, variant = 'X01'):
+    def analyze_throw(self, thrower, throw_number, throw_points, points_left, busted, variant):
         throw_timestamp = get_timestamp()
 
-        if self.__record_state == True and busted == False:
-            throw_number = int(throw_number)
-            throw_points = int(throw_points)
-            points_left = int(points_left)
+        if self.__record_state == True:
 
-            self.__turn_points += throw_points
+            if busted == "False":
+                throw_number = int(throw_number)
+                throw_points = int(throw_points)
+                points_left = int(points_left)
 
-            if throw_number == 1:
-                self.__tt1 = throw_timestamp
-                self.__tv1 = throw_points
-            elif throw_number == 2:
-                self.__tt2 = throw_timestamp
-                self.__tv2 = throw_points
-            elif throw_number == 3:
-                self.__tt3 = throw_timestamp
-                self.__tv3 = throw_points
+                self.__turn_points += throw_points
 
-            self.__printv('Timestamp: ' + str(throw_timestamp), only_debug = True)
-            self.__printv('Throw-number: ' + str(throw_number), only_debug = True)
-            self.__printv('Turn-points: ' + str(self.__turn_points), only_debug = True)
-            self.__printv('Points-left: ' + str(points_left), only_debug = True)   
+                if throw_number == 1:
+                    self.__tt1 = throw_timestamp
+                    self.__tv1 = throw_points
+                elif throw_number == 2:
+                    self.__tt2 = throw_timestamp
+                    self.__tv2 = throw_points
+                elif throw_number == 3:
+                    self.__tt3 = throw_timestamp
+                    self.__tv3 = throw_points
 
-            highlight_occured = self.__check_for_highlight_highfinish(variant, thrower, throw_number, points_left)
-            if highlight_occured == False:
-                self.__check_for_highlight_highscore(variant, thrower, throw_number)
+                self.__printv('Timestamp: ' + str(throw_timestamp), only_debug = True)
+                self.__printv('Throw-number: ' + str(throw_number), only_debug = True)
+                self.__printv('Turn-points: ' + str(self.__turn_points), only_debug = True)
+                self.__printv('Points-left: ' + str(points_left), only_debug = True)   
 
-            if throw_number == 3:
+                highlight_occured = self.__check_for_highlight_highfinish(variant, thrower, throw_number, points_left)
+                if highlight_occured == False:
+                    self.__check_for_highlight_highscore(variant, thrower, throw_number)
+            
+            if throw_number == 3 or busted == "True":
                 self.__reset_highlight_vars()
         else:
             self.__printv('RECORDING IS CURRENTLY STOPPED. PLEASE START IT TO TRACK HIGHLIGHTS')
@@ -490,7 +504,6 @@ class AutodartsHighlights(threading.Thread):
             "variant": variant,
             "average": 0.0,
             "manual": False,
-            "zoomed": False,
             "key-points": key_points
         }
 
@@ -517,8 +530,7 @@ class AutodartsHighlights(threading.Thread):
             vsi.move_ptz_camera()
 
     def __generate_highlight_clip(self, hlf):
-        highlight_clipper = HighlightClipper(self.__config['clip-path'], 
-                                            self.__config['clip-generation-sounds-path'], 
+        highlight_clipper = HighlightClipper(self.__config['clip-generation-sounds-path'], 
                                             hlf, 
                                             self.__config['highlights-time-offset-before'], 
                                             self.__config['highlights-time-offset-after'])
@@ -540,17 +552,17 @@ class AutodartsHighlights(threading.Thread):
 
 @app.route('/leg_started')
 def leg_started():
-    # autodarts_highlights.record()
+    autodarts_highlights.start_stop_recording()
     return "200"
 
 @app.route('/leg_ended')
 def leg_ended():
-    # autodarts_highlights.stop_record()
+    # autodarts_highlights.start_stop_recording()
     return "200"
 
-@app.route('/throw/<thrower>/<throw_number>/<throw_points>/<points_left>')
-def throw(thrower, throw_number, throw_points, points_left):
-    autodarts_highlights.analyze_throw(thrower, throw_number, throw_points, points_left)
+@app.route('/throw/<thrower>/<throw_number>/<throw_points>/<points_left>/<busted>/<variant>')
+def throw(thrower, throw_number, throw_points, points_left, busted, variant):
+    autodarts_highlights.analyze_throw(thrower, throw_number, throw_points, points_left, busted, variant)
     return "200"
 
 @app.route('/turn/<turn_points>')
@@ -558,19 +570,20 @@ def turn(turn_points):
     autodarts_highlights.analyze_turn(turn_points)
     return "200"
 
-@app.route('/index', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         autodarts_highlights.start_stop_recording()
+        return redirect(request.referrer)
         
     is_recording = autodarts_highlights.get_recording_state()
-    clips = autodarts_highlights.list_clips()
+    recordings = autodarts_highlights.list_recordings()
 
-    return render_template('index.html', recording = is_recording, clips = clips)
+    return render_template('index.html', recording = is_recording, recordings = recordings)
 
-@app.route('/clips/<clip_id>', methods=['GET'])
-def clips(clip_id):
-    return send_from_directory('clips', clip_id)
+@app.route('/clips/<record_id>/<clip_id>', methods=['GET'])
+def clips(record_id, clip_id):
+    return send_from_directory(os.path.join(autodarts_highlights.get_record_path(), record_id), clip_id)
    
     
 

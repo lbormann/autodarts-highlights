@@ -7,7 +7,7 @@
     "highlights-highscore-on": 140,
     "highlights-highfinish-on": 100,
     "highlights-time-offset-before": 2,
-    "highlights-time-offset-after": 7,
+    "highlights-time-offset-after": 6,
     "start-record-on-app-start": false,
     "video-sources": [
         {

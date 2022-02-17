@@ -1,6 +1,6 @@
 <html !doctype>
     <head>
-        <link rel="stylesheet" href="/static/css/style.css?v=1.0.42">
+        <link rel="stylesheet" href="/static/css/style.css?v=1.0.43">
     </head>
 
     <body>
@@ -15,13 +15,20 @@
             </form>
         {% endif %}
 
-        {% for c in clips %}
-            <div class="video-mask">
-                <video width="100%" height="auto" controls >
-                    <source src="{{ url_for('clips', clip_id=c) }}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
+        {% for r in recordings %}
+            <div>
+                <h1>{{ r['path'] }}</h1>
+                {% for c in r['clips'] %}
+                    <div class="video-mask">
+                        <h3>{{ c['file'] }}</h3>
+                        <video width="100%" height="auto" controls>
+                            <source src="{{ url_for('clips', record_id=r['path'], clip_id=c['file']) }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                {% endfor %}
             </div>
+            <hr>
         {% endfor %}
         
     </body>

@@ -22,7 +22,7 @@ input[type=button], input[type=submit]{
 }
 
 .video-mask{
-    width: 80%;
+    width: 33%;
     border-radius: 20px; 
     overflow: hidden; 
     margin: 0 auto;
