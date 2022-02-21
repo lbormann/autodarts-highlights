@@ -2,7 +2,7 @@
     "host": "0.0.0.0",
     "port": "9095",
     "record-path": "<Absolute-path-where-the-application-can-store-record-files>",
-    "clip-generation-sounds-path": "<Absolute-path-where-the-application-can-find-sound-files>",
+    "sounds-path": "<Absolute-path-where-the-application-can-find-sound-files>",
     "highlights-highscore-on": 140,
     "highlights-highfinish-on": 100,
     "highlights-time-offset-before": 2,
@@ -10,10 +10,15 @@
     "start-record-on-app-start": false,
     "video-sources": [
         {
-            "video-name": "Your-chosen-camera-name (1)",
+            "video-name": "Your-chosen-camera-name (2)",
             "activate": true,
             "purpose": 0,
-            "invert-image": false,
+            "video-source": 0
+        },
+        {
+            "video-name": "Your-chosen-camera-name (1)",
+            "activate": true,
+            "purpose": 1,
             "video-source": "rtsp://<USERNAME>:<PASSWORD>@<HOST>:<PORT>/<CUSTOM-PATH>",
             "onvif-ptz-camera": true,
             "onvif-ptz-camera-host": "",
@@ -21,13 +26,7 @@
             "onvif-ptz-camera-user": "",
             "onvif-ptz-camera-password": "",
             "onvif-ptz-camera-preset": 11
-        },
-        {
-            "video-name": "Your-chosen-camera-name (2)",
-            "activate": true,
-            "purpose": 1,
-            "invert-image": false,
-            "video-source": 0
         }
+
     ]
 }

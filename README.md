@@ -75,6 +75,7 @@ It may be buggy. I've just coded it for fast fun with autodarts.io. You can give
 
 ## TODOs
 
+- care of turned ended to prevent false addition of throw values
 - X create simple html: start-record, stop-record
 - X create folder for every record-run with all camera-record-outputs
 - X Dont stop every record on highlight, just produce a list of 3-throws timestamps, and save them to a json file
@@ -82,10 +83,16 @@ It may be buggy. I've just coded it for fast fun with autodarts.io. You can give
 - X add crowd before first dart (loud to silent), every dart "Ouh", in the end mix caller in
 - X change clip-file name to: timestamp_thrower_variant_type_value
 - X change default constant clip-path to record-path to know where the clips come from easily
-- Let the user re-generate a highlight-clip
+- X make every clip-generation unique
+- X Let the user re-generate a highlight-clip
     - let the user change latence when its not sync (for every dart)
-    - Let the user change turn-value when its wrong
+    -X Let the user change turn-value when its wrong
     - Let the user delete (hide/show) a highlight-clip
+- improve mobile version
+    - maximize video player
+-X Force browser to reload videos
+- delete recordings without highlights automatically
+- bring in telegram bot - upload every highlight via button
 - maybe combine AC with AH to one application?
 - parallize highlight-clip-generation instead of each recording one-by-one
 - Add latence to config
@@ -97,15 +104,15 @@ It may be buggy. I've just coded it for fast fun with autodarts.io. You can give
 - Remove ptz-functionality, at least from config
 - replace image-background with wm-stage
 - add scoreboard
-- make every clip-generation unique
-- Extends html to watch clips (top: newest, down. latest)
+-X Extends html to watch clips (top: newest, down. latest)
 - Extends json-structure to see 9-darters
 - Make it more easy to use
 - Care of possible error situations that may appear during long run 
     - what happens when one camera is activated but not reachable
     - what happens when clip generation fails
     - what happens when recording was deleted during clip-generation
-
+    - test under linux, .avi - different format?
+    - what happens when no config file rdy?
 
 ## LAST WORDS
 

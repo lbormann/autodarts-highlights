@@ -7,7 +7,7 @@ html{
 }
 
 input[type=button], input[type=submit]{
-    display: block;
+    display: inline-block;
     width: auto; 
     height: auto;
     background-color: #4CAF50;
@@ -24,14 +24,15 @@ input[type=button], input[type=submit]{
 .generate{
     background-color: orange !important;
     padding: 8px 24px !important;
+    font-size: 15pt !important;
 }
 
 .video-mask{
-    width: 33%;
+    width: 60%;
     border-radius: 20px; 
     overflow: hidden; 
     margin: 0 auto;
-    margin-bottom: 30px;
+    margin-top: 30px;
 }
 
 

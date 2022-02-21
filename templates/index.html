@@ -1,6 +1,6 @@
 <html !doctype>
     <head>
-        <link rel="stylesheet" href="/static/css/style.css?v=1.0.47">
+        <link rel="stylesheet" href="/static/css/style.css?v=1.0.52">
     </head>
 
     <body>
@@ -15,32 +15,38 @@
             </form>
         {% endif %}
 
-        <hr>
-
         {% for r in recordings %}
 
-                <h1>{{ r['path'] }}</h1>
+            <h1>{{ r['path'] }}</h1>
 
-                {% for c in r['clips'] %}
+            {% for c in r['clips'] %}
 
-                    {% if c['exists'] == True %}
-                        <div class="video-mask">
-                            <h3>{{ c['file'] }}</h3>
-                            <video width="100%" height="auto" controls>
-                                <source src="{{ url_for('clips', record_id=r['path'], clip_id=c['file']) }}" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                        </div>
-                    {% else %}
-                        <div>
-                            <form name="record_start_stop" action="#" method="POST">
-                                <input name="clip_id" type="hidden" value="{{ c['file'] }}" >
-                                <input class="generate" type="submit" value="Generate {{ c['file'] }} ">
-                            </form>
-                        </div>
-                    {% endif %}
+                {% if c['exists'] == True %}
 
-                {% endfor %}
+                    <div class="video-mask">    
+                        <video width="100%" height="auto" controls>
+                            <source src="{{ url_for('clips', record_id=r['path'], clip_id=c['file']) }}?t={{unique}}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    
+                {% endif %}
+
+                <div>
+                    <form name="generate_clip" action="#" method="POST">
+                        <output>{{ c['user'] }}</output>
+                        <output>{{ c['variant'] }}</output>
+                        <output>{{ c['type'] }}</output>
+                        <input name="custom_value" type="range" min="0" max="180" step="1" value="{{ c['value'] }}" oninput="this.nextElementSibling.value = this.value">
+                        <output>{{ c['value'] }}</output>
+                        
+                        <input name="record_id" type="hidden" value="{{ r['path'] }}" >
+                        <input name="clip_id" type="hidden" value="{{ c['file'] }}" >
+                        <input class="generate" type="submit" value="Generate">
+                    </form>
+                </div>
+
+            {% endfor %}
             
             <hr>
         {% endfor %}

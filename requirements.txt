@@ -2,3 +2,5 @@ opencv-contrib-python
 Flask==1.1.1
 moviepy
 ONVIFCameraControl
+cvzone
+mediapipe
