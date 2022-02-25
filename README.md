@@ -85,23 +85,26 @@ It may be buggy. I've just coded it for fast fun with autodarts.io. You can give
 - X change default constant clip-path to record-path to know where the clips come from easily
 - X make every clip-generation unique
 - X Let the user re-generate a highlight-clip
-    - let the user change latence when its not sync (for every dart)
+    - let the user change the thrower name
+    - let the user change latence when its not sync (delay for video-sources)
     -X Let the user change turn-value when its wrong
     - Let the user delete (hide/show) a highlight-clip
 - improve mobile version
     - maximize video player
 -X Force browser to reload videos
+- Anchor to video when generate was clicked
 - delete recordings without highlights automatically
+- bring in whatsapp group upload - upload highlight via button click
 - bring in telegram bot - upload every highlight via button
 - maybe combine AC with AH to one application?
 - parallize highlight-clip-generation instead of each recording one-by-one
 - Add latence to config
 -X Add mirror to config (video-sources)
 - Improve Readme
-- Handle multiple video-source (for now 2 are working for "correct" clips)
-- extend AD-Caller for busted, variant etc.
+- Handle multiple video-source (for now 2 are working for "correct" clips - side by side)
+-X extend AD-Caller for busted, variant etc.
 -X add DEBUG, add printv for each Class
-- Remove ptz-functionality, at least from config
+-X Remove ptz-functionality, at least from config
 - replace image-background with wm-stage
 - add scoreboard
 -X Extends html to watch clips (top: newest, down. latest)

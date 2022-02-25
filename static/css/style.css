@@ -20,11 +20,19 @@ input[type=button], input[type=submit]{
     font-size: 25pt;
     border-radius: 25pt;    
 }
+input[type=text]{
+    font-size: large;
+}
 
-.generate{
-    background-color: orange !important;
-    padding: 8px 24px !important;
-    font-size: 15pt !important;
+h1{
+    display: inline-block;
+    text-decoration: underline;
+}
+h2{
+    display: inline-block;
+}
+output{
+    font-size: 20pt;
 }
 
 .video-mask{
@@ -32,8 +40,36 @@ input[type=button], input[type=submit]{
     border-radius: 20px; 
     overflow: hidden; 
     margin: 0 auto;
-    margin-top: 30px;
+    margin-top: 100px;
 }
+.stop{
+    background-color: red !important;
+}
+.start{
+    background-color: #4CAF50 !important;
+}
+.generate{
+    margin-left: 20px;
+    background-color: orange !important;
+    padding: 8px 24px !important;
+    font-size: 15pt !important;
+}
+.remove{
+    margin-left: 20px;
+    background-color: red !important;
+    padding: 8px 24px !important;
+    font-size: 15pt !important;
+}
+.upload{
+    margin-left: 20px;
+    background-color: blueviolet !important;
+    padding: 8px 24px !important;
+    font-size: 15pt !important;
+}
+
+
+
+
 
 
 

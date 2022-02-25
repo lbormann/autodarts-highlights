@@ -1,22 +1,28 @@
 <html !doctype>
     <head>
-        <link rel="stylesheet" href="/static/css/style.css?v=1.0.52">
+        <link rel="stylesheet" href="/static/css/style.css?v=1.0.66">
     </head>
 
     <body>
         
         {% if recording == true %}
+
             <form name="record_start_stop" action="#" method="POST">
-                <input type="submit" value="Stop Recording">
+                <input name="start_stop" class="stop" type="submit" value="Stop Recording">
             </form>
+
         {% else %}
+
             <form name="record_start_stop" action="#" method="POST">
-                <input type="submit" value="Start Recording">
+                <input name="start_stop" class="start" type="submit" value="Start Recording">
             </form>
+
         {% endif %}
+
 
         {% for r in recordings %}
 
+            <br><br><br>
             <h1>{{ r['path'] }}</h1>
 
             {% for c in r['clips'] %}
@@ -34,15 +40,27 @@
 
                 <div>
                     <form name="generate_clip" action="#" method="POST">
-                        <output>{{ c['user'] }}</output>
-                        <output>{{ c['variant'] }}</output>
-                        <output>{{ c['type'] }}</output>
-                        <input name="custom_value" type="range" min="0" max="180" step="1" value="{{ c['value'] }}" oninput="this.nextElementSibling.value = this.value">
-                        <output>{{ c['value'] }}</output>
-                        
-                        <input name="record_id" type="hidden" value="{{ r['path'] }}" >
-                        <input name="clip_id" type="hidden" value="{{ c['file'] }}" >
-                        <input class="generate" type="submit" value="Generate">
+                        {% if c['exists'] == True %}
+
+                            <input name="user" type="text" value="{{ c['user'] }}" >
+
+                            <h2>{{ c['variant'] }}</h2>
+                            <h2>{{ c['type'] }}</h2>
+                            <input name="custom_value" type="range" min="0" max="180" step="1" value="{{ c['value'] }}" oninput="this.nextElementSibling.value = this.value">
+                            <output>{{ c['value'] }}</output>
+                            
+                            <input name="record_id" type="hidden" value="{{ r['path'] }}" >
+                            <input name="clip_id" type="hidden" value="{{ c['file'] }}" >
+
+                            <input name="action" class="action generate" type="submit" value="Generate">
+                            <input name="action" class="action remove" type="submit" value="Remove">
+                            <input name="action" class="action upload" type="submit" value="Upload">
+
+                        {% else %}
+
+                            <h2> Generating ... </h2>
+
+                        {% endif %}
                     </form>
                 </div>
 

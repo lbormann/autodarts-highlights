@@ -1,11 +1,11 @@
 import os
-import glob
 from os import path
 import random
 import uuid
 import platform
 import threading
 import json
+import shutil
 from datetime import date, datetime
 from moviepy.editor import *
 import unicodedata
@@ -17,12 +17,15 @@ app = Flask(__name__)
 import logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
+import subprocess
+import signal
+
 
 
 
 VERSION = '0.9.0'
 DEBUG = True
-RECORD_FORMAT = ".avi"
+RECORD_FORMAT = ".mp4"
 CLIP_FORMAT = ".mp4"
 HIGHLIGHTS_FILE_NAME = "highlights.json"
 SOUNDS_FOLDER_BACKGROUND = "background"
@@ -92,10 +95,10 @@ def get_sounds_crowd(sounds_path):
     return get_available_sounds(os.path.join(sounds_path, SOUNDS_FOLDER_CROWD))
 
 def normalize_random_choice(li):
-    if li == []:
+    if len(li) == 0:
         return None
     else:
-        random.choice(li)
+        return random.choice(li)
 
 def get_random_clip_vars(
                   z_min, z_max,
@@ -153,6 +156,7 @@ class HighlightClipper(threading.Thread):
     offset_before, 
     offset_after, 
     clip_id = None, 
+    custom_user = None,
     custom_value = None,
     clip_vars = None
     ):
@@ -167,19 +171,21 @@ class HighlightClipper(threading.Thread):
         self.__is_first_video_clip_of_array = True
         self.__clip_id = clip_id
         self.__clip_vars = clip_vars
+        self.__custom_user = custom_user
         self.__custom_value = custom_value
 
     def run(self):
 
         # Process single, specific highlight
         highlight_to_process = None
-        if self.__clip_id != None and self.__custom_value != None:
+        if self.__clip_id != None and self.__custom_user != None and self.__custom_value != None:
             with open(self.__highlight_file) as file:
                 file_data = json.load(file)
 
                 # Find the corresponding highlight
                 for hl in file_data["highlights"]:
                     if (get_clip_file_name(hl) + CLIP_FORMAT) == self.__clip_id:
+                        hl['user'] = str(self.__custom_user)
                         hl['value'] = int(self.__custom_value)
                         highlight_to_process = hl
                         break
@@ -201,7 +207,7 @@ class HighlightClipper(threading.Thread):
 
             # Process all highlights of recording
             else:
-                printv(str(len(file_data["highlights"])) + ' HIGHLIGHTS TO PROCESS')
+                self.__printv(str(len(file_data["highlights"])) + ' HIGHLIGHTS TO PROCESS')
                 for hl in file_data["highlights"]:
                     self.__is_first_video_clip_of_array = True
                     self.__generate_highlight_clip(hl, file_data["video-sources"], latest_start_timestamp)
@@ -239,8 +245,6 @@ class HighlightClipper(threading.Thread):
         clip_file_path = os.path.dirname(os.path.abspath(self.__highlight_file))
         clip_file_path = os.path.join(clip_file_path, clip_file_name + self.__clip_format)
 
-        # .resize(width=480)
-        # audio_codec='mp3'
         final_clip.write_videofile(clip_file_path)
         
         
@@ -262,12 +266,12 @@ class HighlightClipper(threading.Thread):
         end = start_highlight_timestamp + highlight_duration + self.__offset_after + delay
 
         # TODO: Remove or repair
-        print('>>> ' + 'Highlight duration: ' + str(highlight_duration))
-        print('>>> ' + vs['name'] + ': Diff: ' + str(diff))
-        print('>>> ' + str(start))
-        print('>>> ' + str(end))
+        # print('>>> ' + 'Highlight duration: ' + str(highlight_duration))
+        # print('>>> ' + vs['name'] + ': Diff: ' + str(diff))
+        # print('>>> ' + str(start))
+        # print('>>> ' + str(end))
 
-        video_source_purpose = vs['purpose']
+        # video_source_purpose = vs['purpose']
         highlight_type = highlight['type']
         highlight_value = highlight['value']
 
@@ -319,11 +323,12 @@ class HighlightClipper(threading.Thread):
             # HITS-CROWD-AUDIO
             cr = v['crowd']
             h = v['hit']
-            ouh_sound_file = cr['file']
+            # ouh_sound_file = cr['file']
             hit_sound_file = h['file']
 
-            if ouh_sound_file != None and hit_sound_file != None:
-                ouh_sound = AudioFileClip(ouh_sound_file).volumex(cr['volume'])
+            # ouh_sound_file != None and 
+            if hit_sound_file != None:
+                # ouh_sound = AudioFileClip(ouh_sound_file).volumex(cr['volume'])
                 hit_sound = AudioFileClip(hit_sound_file).volumex(h['volume'])
 
                 # For each thrown dart
@@ -333,12 +338,12 @@ class HighlightClipper(threading.Thread):
                     tss = (ts - record_started_timestamp).total_seconds() + delay
 
                     # Make deciding dart-reaction more loud
-                    if i == (len(highlight['key-points']) - 1):
-                        ouh_sound = ouh_sound.volumex(cr['last-dart-volume']) 
+                    # if i == (len(highlight['key-points']) - 1):
+                    #     ouh_sound = ouh_sound.volumex(cr['last-dart-volume']) 
 
                     # Add dart-hit and crowd-reaction
                     sounds.append(hit_sound.set_start(tss))
-                    sounds.append(ouh_sound.set_start(tss + cr['delay-after-hit']))
+                    # sounds.append(ouh_sound.set_start(tss + cr['delay-after-hit']))
             else:
                 self.__printv('Warning: ouh-sound-file or hit-sound-file not found, skip')
 
@@ -369,9 +374,21 @@ class HighlightClipper(threading.Thread):
     
 
         # Zoom slowly when video-source is watching player
-        if video_source_purpose == 1:
-            zoom = v['video-source']['zoom']
-            highlight_clip = highlight_clip.resize(lambda t : 1 + zoom * t)
+        # if video_source_purpose == 1:
+            # zoom = v['video-source']['zoom']
+
+            # w, h = img.size
+            # new_w = w * (1 + (zoom_ratio * t))
+            # new_h = new_w * (h / w)
+            # # Determine the height based on the new width to maintain the aspect ratio.
+            # new_size = (new_w, new_h)
+
+            # highlight_clip = highlight_clip.resize((1280,720) ) # New resolution: (460,720)
+            # highlight_clip = highlight_clip.resize(0.6) # width and heigth multiplied by 0.6
+            # highlight_clip = highlight_clip.resize(width=1920) # height computed automatically.
+            # highlight_clip = highlight_clip.resize(lambda t : 1+0.02*t) # slow swelling of the clip
+
+            # highlight_clip = highlight_clip.resize(lambda t : 1 + zoom * t)
 
         return highlight_clip
  
@@ -391,6 +408,7 @@ class VideoSource(threading.Thread):
         self.__record_started_timestamp = None
         self.__record_state = True
         self.__record_path =  self.__config['record-path']
+        self.__proc = None
 
         if "onvif-ptz-camera" in self.__config and self.__config["onvif-ptz-camera"] == True:
             self.__ptz_camera = ONVIFCameraControl((self.__config["onvif-ptz-camera-host"], self.__config["onvif-ptz-camera-port"]), self.__config["onvif-ptz-camera-user"], self.__config["onvif-ptz-camera-password"])
@@ -399,41 +417,78 @@ class VideoSource(threading.Thread):
 
 
     def run(self):
-        cap = cv2.VideoCapture(self.__config['video-source'])
-
-        w = int(cap.get(3))
-        h = int(cap.get(4))
-        fps = cap.get(cv2.CAP_PROP_FPS)
-
-        if fps < 0.1 or fps > 60.0:
-            fps = 30.0
-
-        # fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
-
-        self.__record_path = os.path.join(self.__record_path, slugify(self.__config['video-name']) + self.__config['record-format']) 
-        out = cv2.VideoWriter(self.__record_path, fourcc, fps, (w, h))
-
-        self.__printv('Recording started - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path)
         
-        ret, frame = cap.read()
-        self.__record_started_timestamp = get_timestamp()
+        self.__record_path = os.path.join(self.__record_path, slugify(self.__config['video-name']) + self.__config['record-format']) 
 
-        while self.__record_state == True:
-            ret, frame = cap.read()
-            if ret == True:
-                out.write(frame)
+
+        if 'ffmpeg' in self.__config and self.__config['ffmpeg'] == True:
+
+            # self.__record_path = os.path.join(self.__record_path, slugify(self.__config['video-name']) + '.mp4') 
+
+            w = self.__config['ffmpeg-width']
+            h = self.__config['ffmpeg-height']
+            fps = self.__config['ffmpeg-fps']
+            codec = self.__config['ffmpeg-codec']
+            id = self.__config['ffmpeg-id']
+
+            self.__printv('Recording started - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path)
+
+            self.__record_started_timestamp = get_timestamp()
+            self.__proc = subprocess.Popen(['ffmpeg', '-f', 'dshow', '-video_size', str(w) + 'x' + str(h), '-framerate', str(fps), '-vcodec', str(codec), '-i', 'video=' + str(id), self.__record_path],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            shell=True, 
+                            universal_newlines=True,
+                            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+
+            for line in self.__proc.stdout:
+                print(line)
+        
+        else:
+
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            # fourcc = cv2.VideoWriter_fourcc('H','2','6','4')    
+            # fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
+
+            if self.__config['video-source'] == 0:
+                cap = cv2.VideoCapture(self.__config['video-source'], cv2.CAP_DSHOW)
             else:
-                self.__printv('Can not read frame')
-                break
+                cap = cv2.VideoCapture(self.__config['video-source'])
+ 
+
+            w = int(cap.get(3))
+            h = int(cap.get(4))
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            if fps < 0.1 or fps > 60.0:
+                fps = 30
+
+            # self.__record_path = os.path.join(self.__record_path, slugify(self.__config['video-name']) + self.__config['record-format'])
+            out = cv2.VideoWriter(self.__record_path, fourcc, fps, (w, h))
+
+            self.__printv('Recording started - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path)
+            
+            ret, frame = cap.read()
+            self.__record_started_timestamp = get_timestamp()
+
+            while self.__record_state == True:
+                ret, frame = cap.read()
+                if ret == True:
+                    out.write(frame)
+                else:
+                    self.__printv('Can not read frame')
+                    break
+
+            cap.release()
+            out.release()
 
         self.__printv('Recording stopped - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path)
 
-        cap.release()
-        out.release()
-
+            
 
     def stop_recording(self):
+        if self.__proc != None:
+            self.__proc.send_signal(signal.CTRL_BREAK_EVENT)
+
         self.__record_state = False
 
     def get_data(self):
@@ -582,7 +637,7 @@ class AutodartsHighlights(threading.Thread):
             self.__record_state = not self.__record_state
         self.__record()
 
-    def generate_clip_manual(self, record_id, clip_id, custom_value):
+    def generate_clip_manual(self, record_id, clip_id, custom_user, custom_value):
         path_joins = [self.__config['record-path'], record_id, HIGHLIGHTS_FILE_NAME]
         structure_file_path = os.path.join(*path_joins)
 
@@ -591,8 +646,14 @@ class AutodartsHighlights(threading.Thread):
                                             self.__config['highlights-time-offset-before'], 
                                             self.__config['highlights-time-offset-after'],
                                             clip_id = clip_id, 
+                                            custom_user = custom_user,
                                             custom_value = custom_value)
         highlight_clipper.start()
+
+    def remove_recording(self, record_id):
+        record_to_delete = os.path.join(self.__config['record-path'], record_id)
+        self.__printv(record_to_delete + ' remove requested')
+        shutil.rmtree(record_to_delete)
 
     def get_recording_state(self):
         return self.__record_state
@@ -715,6 +776,7 @@ class AutodartsHighlights(threading.Thread):
 
         self.__highlight_files.add(highlights_path)
 
+        # TODO: Remove? 
         # for vsi in self.__vsis:
         #     vsi.move_ptz_camera()
 
@@ -763,14 +825,28 @@ def turn(turn_points):
 def index():
     if request.method == 'POST':
         form = request.form
-        record_id = form.get("record_id")
-        clip_id = form.get("clip_id")
-        custom_value = form.get("custom_value")
 
-        if record_id != None and record_id != "" and clip_id != None and clip_id != "":
-            autodarts_highlights.generate_clip_manual(record_id, clip_id, custom_value)
+        if request.form['action'] == 'Generate':
+            record_id = form.get("record_id")
+            clip_id = form.get("clip_id")
+            custom_user = form.get("custom_user")
+            custom_value = form.get("custom_value")
+
+            if record_id != None and record_id != "" and clip_id != None and clip_id != "":
+                autodarts_highlights.generate_clip_manual(record_id, clip_id, custom_user, custom_value)
+
+        elif request.form['action'] == 'Remove':
+            record_id = form.get("record_id")
+
+            if record_id != None and record_id != "":
+                autodarts_highlights.remove_recording(record_id)
+
+        elif request.form['action'] == 'Upload':
+            pass # do something else
+
         else:
             autodarts_highlights.start_stop_recording()
+          
 
         return redirect(request.referrer)
         

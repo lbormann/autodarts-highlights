@@ -1,5 +1,9 @@
 config.json
 recordings
 sounds
+ffmpeg.exe
+ffplay.exe
+ffprobe.exe
 autodarts-highlights-commands.txt
 tests
+
