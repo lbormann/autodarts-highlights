@@ -1,6 +1,8 @@
 <html !doctype>
     <head>
-        <link rel="stylesheet" href="/static/css/style.css?v=1.0.66">
+        <link rel="stylesheet" href="/static/css/style.css?v=1.0.73">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script> 
+        <script type="text/javascript" src="/static/js/custom.js?v=1.0.50"></script>
     </head>
 
     <body>
@@ -20,18 +22,37 @@
         {% endif %}
 
 
+
+
         {% for r in recordings %}
 
             <br><br><br>
-            <h1>{{ r['path'] }}</h1>
+            <h1>{{ r['id'] }}</h1>
 
-            {% for c in r['clips'] %}
+            <div id="{{ r['id'] }}" class="hide">
 
-                {% if c['exists'] == True %}
+                {% for vs in r['video-sources'] %}
+                    <div class="video-mask-calibration">    
+                        <video id="{{ r['id'] + vs['id'] }}" width="100%" height="auto" controls>
+                            <source src="{{ url_for('videos', record_id=r['id'], video_id=vs['file-name']) }}?t={{unique}}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+
+                    <input class="action calibrate" type="submit" value="Hit!" onclick="calibrate()">
+                    <output></output>
+                {% endfor %}
+
+            </div>
+
+
+            {% for h in r['highlights'] %}
+
+                {% if h['exists'] == True %}
 
                     <div class="video-mask">    
-                        <video width="100%" height="auto" controls>
-                            <source src="{{ url_for('clips', record_id=r['path'], clip_id=c['file']) }}?t={{unique}}" type="video/mp4">
+                        <video id="{{ h['file-name'] }}" width="100%" height="auto" controls>
+                            <source src="{{ url_for('videos', record_id=r['id'], video_id=h['file-name']) }}?t={{unique}}" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
                     </div>
@@ -39,29 +60,38 @@
                 {% endif %}
 
                 <div>
-                    <form name="generate_clip" action="#" method="POST">
-                        {% if c['exists'] == True %}
 
-                            <input name="user" type="text" value="{{ c['user'] }}" >
+                    <input class="action calibrate" type="submit" value="Calibrate" onclick="{{ 'start_calibration(\'' + r['id'] + '\',' + '\'' + h['id'] + '\',' + h['times'] + ')' }}">
 
-                            <h2>{{ c['variant'] }}</h2>
-                            <h2>{{ c['type'] }}</h2>
-                            <input name="custom_value" type="range" min="0" max="180" step="1" value="{{ c['value'] }}" oninput="this.nextElementSibling.value = this.value">
-                            <output>{{ c['value'] }}</output>
+
+                        {% if h['exists'] == True %}
+
+                            <form name="generate_clip" action="#" method="POST">
+                                <input name="custom_user" type="text" value="{{ h['user'] }}" >
+
+                                <h2>{{ h['variant'] }}</h2>
+                                <h2>{{ h['type'] }}</h2>
+                                <input name="custom_value" type="range" min="0" max="180" step="1" value="{{ h['value'] }}" oninput="this.nextElementSibling.value = this.value">
+                                <output>{{h['value'] }}</output>
+                                
+                                <input name="record_id" type="hidden" value="{{ r['id'] }}" >
+                                <input name="clip_id" type="hidden" value="{{ h['file-name'] }}" >
+
+                                <input name="action" class="action generate" type="submit" value="Generate">
+                                <input name="action" class="action remove" type="submit" value="Remove">
+                                <input name="action" class="action upload" type="submit" value="Upload">
+                            </form>
                             
-                            <input name="record_id" type="hidden" value="{{ r['path'] }}" >
-                            <input name="clip_id" type="hidden" value="{{ c['file'] }}" >
-
-                            <input name="action" class="action generate" type="submit" value="Generate">
-                            <input name="action" class="action remove" type="submit" value="Remove">
-                            <input name="action" class="action upload" type="submit" value="Upload">
 
                         {% else %}
 
-                            <h2> Generating ... </h2>
+                            <h2> Wait for generation ... </h2>
 
                         {% endif %}
-                    </form>
+
+
+
+                    
                 </div>
 
             {% endfor %}
@@ -70,5 +100,11 @@
         {% endfor %}
         
     </body>
+
+
+    <script>
+
+
+    </script>
 
 </html>

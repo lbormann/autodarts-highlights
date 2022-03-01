@@ -10,16 +10,16 @@
     "start-record-on-app-start": false,
     "video-sources": [
         {
+            "id": "0",
             "video-name": "Your-chosen-camera-name (2)",
             "video-source": 0,
-            "activate": true,
-            "purpose": 0
+            "activate": true
         },
         {
+            "id": "1",
             "video-name": "Your-chosen-camera-name (1)",
             "video-source": "rtsp://<USERNAME>:<PASSWORD>@<HOST>:<PORT>/<CUSTOM-PATH>",
             "activate": true,
-            "purpose": 1,
             "onvif-ptz-camera": true,
             "onvif-ptz-camera-host": "",
             "onvif-ptz-camera-port": 0,

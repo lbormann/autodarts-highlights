@@ -15,12 +15,13 @@ Tested on Windows 11 Pro x64, Python 3.9.7, Sunba Illuminati (camera-0), One Plu
 
 - Download and install python 3.x.x for your specific os.
 - Download and install pip
-- Download and install https://imagemagick.org/script/download.php
-
 
 ### Get the project
 
     git clone https://github.com/lbormann/autodarts-highlights.git
+    https://github.com/cisco/openh264/releases
+    Download ffmpeg for your specific os.
+    Download h264 for your specific os and put this dll-file in autodarts-highlights main-folder.
 
 Go to download-directory and type:
 
@@ -92,6 +93,7 @@ It may be buggy. I've just coded it for fast fun with autodarts.io. You can give
 - improve mobile version
     - maximize video player
 -X Force browser to reload videos
+- only react to supported games modes
 - Anchor to video when generate was clicked
 - delete recordings without highlights automatically
 - bring in whatsapp group upload - upload highlight via button click
@@ -116,6 +118,7 @@ It may be buggy. I've just coded it for fast fun with autodarts.io. You can give
     - what happens when recording was deleted during clip-generation
     - test under linux, .avi - different format?
     - what happens when no config file rdy?
+    - Does calibration work in different browsers?
 
 ## LAST WORDS
 
