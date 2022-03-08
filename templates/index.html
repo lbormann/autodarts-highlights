@@ -1,26 +1,19 @@
 <html !doctype>
     <head>
-        <link rel="stylesheet" href="/static/css/style.css?v=1.0.73">
+        <link rel="stylesheet" href="/static/css/style.css?v=1.0.74">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script> 
-        <script type="text/javascript" src="/static/js/custom.js?v=1.0.50"></script>
+        <script type="text/javascript" src="/static/js/custom.js?v=1.0.53"></script>
     </head>
 
     <body>
         
-        {% if recording == true %}
+        {% if recording == True %}
 
             <form name="record_start_stop" action="#" method="POST">
-                <input name="start_stop" class="stop" type="submit" value="Stop Recording">
-            </form>
-
-        {% else %}
-
-            <form name="record_start_stop" action="#" method="POST">
-                <input name="start_stop" class="start" type="submit" value="Start Recording">
+                <input name="stop" class="stop" type="submit" value="Stop Recording">
             </form>
 
         {% endif %}
-
 
 
 
@@ -32,6 +25,10 @@
             <div id="{{ r['id'] }}" class="hide">
 
                 {% for vs in r['video-sources'] %}
+
+                    <input class="action calibrate" type="submit" value="Hit!" onclick="calibrate()">
+                    <output></output>
+
                     <div class="video-mask-calibration">    
                         <video id="{{ r['id'] + vs['id'] }}" width="100%" height="auto" controls>
                             <source src="{{ url_for('videos', record_id=r['id'], video_id=vs['file-name']) }}?t={{unique}}" type="video/mp4">
@@ -39,8 +36,7 @@
                         </video>
                     </div>
 
-                    <input class="action calibrate" type="submit" value="Hit!" onclick="calibrate()">
-                    <output></output>
+
                 {% endfor %}
 
             </div>
@@ -60,38 +56,24 @@
                 {% endif %}
 
                 <div>
-
                     <input class="action calibrate" type="submit" value="Calibrate" onclick="{{ 'start_calibration(\'' + r['id'] + '\',' + '\'' + h['id'] + '\',' + h['times'] + ')' }}">
+                    <form name="generate_clip" action="#" method="POST">
+                        <input name="custom_user" type="text" value="{{ h['user'] }}" >
 
+                        <h2>{{ h['variant'] }}</h2>
+                        <h2>{{ h['type'] }}</h2>
+                        <input name="custom_value" type="range" min="0" max="180" step="1" value="{{ h['value'] }}" oninput="this.nextElementSibling.value = this.value">
+                        <output>{{h['value'] }}</output>
+                        
+                        <input name="record_id" type="hidden" value="{{ r['id'] }}" >
+                        <input name="clip_id" type="hidden" value="{{ h['file-name'] }}" >
 
-                        {% if h['exists'] == True %}
-
-                            <form name="generate_clip" action="#" method="POST">
-                                <input name="custom_user" type="text" value="{{ h['user'] }}" >
-
-                                <h2>{{ h['variant'] }}</h2>
-                                <h2>{{ h['type'] }}</h2>
-                                <input name="custom_value" type="range" min="0" max="180" step="1" value="{{ h['value'] }}" oninput="this.nextElementSibling.value = this.value">
-                                <output>{{h['value'] }}</output>
-                                
-                                <input name="record_id" type="hidden" value="{{ r['id'] }}" >
-                                <input name="clip_id" type="hidden" value="{{ h['file-name'] }}" >
-
-                                <input name="action" class="action generate" type="submit" value="Generate">
-                                <input name="action" class="action remove" type="submit" value="Remove">
-                                <input name="action" class="action upload" type="submit" value="Upload">
-                            </form>
-                            
-
-                        {% else %}
-
-                            <h2> Wait for generation ... </h2>
-
+                        <input name="action" class="action generate" type="submit" value="Generate">
+                        <input name="action" class="action remove" type="submit" value="Remove">
+                        {% if upload == True and h['exists'] == True %}
+                        <input name="action" class="action upload" type="submit" value="Upload">
                         {% endif %}
-
-
-
-                    
+                    </form> 
                 </div>
 
             {% endfor %}

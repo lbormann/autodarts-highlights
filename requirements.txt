@@ -1,7 +1,5 @@
 opencv-contrib-python
 Flask==1.1.1
-flask-restful
 moviepy
 ONVIFCameraControl
-cvzone
-mediapipe
+python-telegram-bot

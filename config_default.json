@@ -8,6 +8,10 @@
     "highlights-time-offset-before": 2,
     "highlights-time-offset-after": 6,
     "start-record-on-app-start": false,
+    "telegram-upload": false,
+    "telegram-bot-token": "<YOUR-BOT-TOKEN>",
+    "telegram-bot-password": "<YOUR-CHOSEN-PASSWORD>",
+    "telegram-automatic-upload": false,
     "video-sources": [
         {
             "id": "0",
