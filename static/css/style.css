@@ -3,7 +3,7 @@ html{
     height: 100%; 
     margin: 0 auto;
     text-align: center;
-    background: linear-gradient(90deg, #FDBB2D 0%, #3A1C71 100%);
+    background: linear-gradient(90deg, gray 0%, black 100%);
 }
 
 input[type=button], input[type=submit]{
@@ -23,7 +23,9 @@ input[type=button], input[type=submit]{
 input[type=text]{
     font-size: large;
 }
-
+hr{
+    width: 70%;
+}
 h1{
     display: inline-block;
     text-decoration: underline;
@@ -36,7 +38,7 @@ output{
 }
 
 .video-mask-calibration{
-    width: 40%;
+    width: 25%;
     border-radius: 20px; 
     overflow: hidden; 
     margin: 0 auto;

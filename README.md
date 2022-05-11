@@ -1,12 +1,12 @@
 # AUTODARTS-HIGHLIGHTS
 
 Autodarts-highlights is primary an extension to https://github.com/lbormann/autodarts-caller.
-It provides several web-endpoints that are fed by autodarts-caller. Its creates video-highlight-clips based on your opinion what it means to be a worthy clip. 
+It provides two web-endpoints that are fed by autodarts-caller. Its creates video-highlight-clips based on your opinion what it means to be a worthy clip. 
 
-Besides your camera-setup for Autodarts, you need at least one more camera that is able to see your board (and/ or yourself) to fetch the full event. 
-If you use multiple cameras (at least two), make sure your cameras similar or equal configuration; use same resolution to prevent black bars in clips. use same fps to prevent delays that needs to be re-synced. Dont use super high quality (> 1920x1080, > 8000 kbps) - it prevents you from annoying calibration and disk-space usage.
+Besides your camera-setup for https://autodarts.io, you need at least one more camera that is able to see your board (and/ or yourself) to fetch the full event. 
+If you use multiple cameras (at least two), make sure your cameras have similar or equal configuration; use same resolution to prevent black bars in clips. use same fps to prevent delays that needs to be re-synced. Dont use super high quality (> 1920x1080, > 8000 kbps) - it prevents you from annoying calibration and disk-space usage.
 
-Tested on Windows 11 Pro x64, Python 3.9.7, Sunba Illuminati (camera-0), One Plus 7 Pro with App CamON Live (camera-1)
+Tested on Windows 11 Pro x64, Python 3.9.7, Sunba Illuminati, One Plus 7 Pro with App CamON Live
 
 
 ## INSTALL INSTRUCTION
@@ -67,6 +67,7 @@ Simple run command example:
 
     python autodarts-highlights.py
 
+INFO: Make sure that it runs before a match at https://autodarts.io starts
 
 
 ## Setup autoboot [linux] (optional)
@@ -82,47 +83,45 @@ Save and close the file. Reboot your system.
 
 ## BUGS
 
-It may be buggy. I've just coded it for fast fun with autodarts.io. You can give me feedback in Discord > wusaaa
+It may be buggy. I've just coded it for fast fun with https://autodarts.io. You can give me feedback in Discord > wusaaa
 
 
 ## TODOs
 
 ### Done
-- X Extends html to watch clips (top: newest, down. latest)
-- X create simple html: start-record, stop-record
-- X create folder for every record-run with all camera-record-outputs
-- X Dont stop every record on highlight, just produce a list of 3-throws timestamps, and save them to a json file
-- X add caller sounds
-- X add crowd before first dart (loud to silent), every dart "Ouh", in the end mix caller in
-- X change clip-file name to: timestamp_thrower_variant_type_value
-- X change default constant clip-path to record-path to know where the clips come from easily
-- X make every clip-generation unique
-- X Let the user re-generate a highlight-clip
-    -X let the user change the thrower name
-    -X let the user change latence when its not sync (delay for video-sources)
-    -X Let the user change turn-value when its wrong
-    -X Let the user delete (hide/show) a highlight-clip
--X Force browser to reload videos
--X delete recordings without highlights automatically
--X Add mirror to config (video-sources)
--X extend AD-Caller for busted, variant etc.
--X add DEBUG, add printv for each Class
--X Remove ptz-functionality, at least from config
--X bring in telegram bot - upload every highlight via button
--X One record per leg (automatic recording)
--X care of turned ended to prevent false addition of throw values
--X Check for clip, out of duration, on clip-generation
+- Extends html to watch clips (top: newest, down. latest)
+- create simple html: start-record, stop-record
+- create folder for every record-run with all camera-record-outputs
+- Dont stop every record on highlight, just produce a list of 3-throws timestamps, and save them to a json file
+- add caller sounds
+- add crowd before first dart (loud to silent), every dart "Ouh", in the end mix caller in
+- change clip-file name to: timestamp_thrower_variant_type_value
+- change default constant clip-path to record-path to know where the clips come from easily
+- make every clip-generation unique
+- Let the user re-generate a highlight-clip
+    - let the user change the thrower name
+    - let the user change latence when its not sync (delay for video-sources)
+    - Let the user change turn-value when its wrong
+    - Let the user delete (hide/show) a highlight-clip
+- Force browser to reload videos
+- delete recordings without highlights automatically
+- Add mirror to config (video-sources)
+- extend AD-Caller for busted, variant etc.
+- add DEBUG, add printv for each Class
+- Remove ptz-functionality, at least from config
+- bring in telegram bot - upload every highlight via button
+- One record per leg (automatic recording)
+- care of turned ended to prevent false addition of throw values
+- Check for clip, out of duration, on clip-generation
+- Care of highlight on record-start/-end
+- only react to supported games modes
+- Remove redudant code
 
 ### In queue
 - Write events to logfile
-- Care of highlight on record-start/-end
-- only react to supported games modes
 - Anchor to video when generate was clicked
 - parallize highlight-clip-generation instead of each recording one-by-one
 - Handle multiple video-source (for now 2 are working for "correct" clips - side by side)
-- Extends json-structure to see 9-darters
-- Extend to bulls-eye finishes
-- Remove redudant code
 - improve mobile version
     - maximize video player
 - Care of possible error situations that may appear during long run 
@@ -137,4 +136,4 @@ It may be buggy. I've just coded it for fast fun with autodarts.io. You can give
 ## LAST WORDS
 
 Make sure your camera is available.
-Thanks to Timo for awesome autodarts.io. It will be huge!
+Thanks to Timo for awesome https://autodarts.io. It will be huge!

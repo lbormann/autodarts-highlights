@@ -17,8 +17,7 @@ import time
 from ONVIFCameraControl import ONVIFCameraControl
 
 
-from flask import Flask, request, redirect, url_for, render_template, send_from_directory
-from flask_restful import reqparse
+from flask import Flask, request, redirect, render_template, send_from_directory
 app = Flask(__name__)
 import logging
 
@@ -40,10 +39,12 @@ SOUNDS_FOLDER_BACKGROUND = "background"
 SOUNDS_FOLDER_HIT = "hit"
 SOUNDS_FOLDER_CROWD = "crowd"
 SOUNDS_FOLDER_CALLER = "caller"
+VALID_SOUND_FORMATS = [".wav", ".WAV", ".mp3", ".MP3", ".aiff", ".AIFF"]
 TELEGRAM_DB_FILE = "telegram_users.txt"
 
+SUPPORTED_GAME_VARIANTS = ['X01']
 DEBUG = True
-VERSION = '0.9.0'
+VERSION = '0.1.0'
 
 
 
@@ -91,11 +92,12 @@ def get_clip_file_name(highlight_json):
     return slugify(str(highlight_started_timestamp).replace(":", "-") + "_" + thrower + "_" + variant + "_" + highlight_type + "_" + str(highlight_value))
 
 def get_available_sounds(p):
-    # TODO: remove constant wav, mp3
     sounds = []
     for file in os.listdir(p):
-        if file.endswith(".wav") or file.endswith(".mp3") or file.endswith(".aiff"):
-            sounds.append(os.path.join(p, file))
+        for vsf in VALID_SOUND_FORMATS:
+            if file.endswith(vsf):
+                sounds.append(os.path.join(p, file))
+                break
     return sounds
 
 def get_available_dirs(p):
@@ -202,7 +204,7 @@ class HighlightClipper(threading.Thread):
 
                 # Find the corresponding highlight
                 for hl in file_data["highlights"]:
-                    if (get_clip_file_name(hl) + CLIP_FORMAT) == self.__clip_id:
+                    if (get_clip_file_name(hl) + self.__clip_format) == self.__clip_id:
                         hl['user'] = str(self.__custom_user)
                         hl['value'] = int(self.__custom_value)
                         highlight_to_process = hl
@@ -228,13 +230,12 @@ class HighlightClipper(threading.Thread):
     def __find_caller_sound(self, caller_folder, filename):
         joins = [self.__sounds_path, SOUNDS_FOLDER_CALLER, str(caller_folder), str(filename)]
         file_to_play = os.path.join(*joins)
-        # TODO: Remove constants
-        if path.isfile(file_to_play + '.wav'):
-            return file_to_play + '.wav'
-        elif path.isfile(file_to_play + '.mp3'):
-            return file_to_play + '.mp3'
-        else:
-            return None
+        
+        for vsf in VALID_SOUND_FORMATS:
+            cur = file_to_play + vsf
+            if path.isfile(cur):
+                return cur
+        return None
 
     def __generate_highlight_clip(self, highlight, video_sources):
         
@@ -273,38 +274,6 @@ class HighlightClipper(threading.Thread):
         end = start_highlight_time + highlight_duration + self.__offset_after
 
 
-        v = self.__clip_vars
-        if self.__clip_vars == None:
-            v = get_random_clip_vars(z_min = 0.03, 
-                                    z_max = 0.09,
-                                    bg_list = get_sounds_background(self.__sounds_path), 
-                                    bg_volume_min = 0.5, 
-                                    bg_volume_max = 0.5, 
-                                    bg_speed_min = 0.8, 
-                                    bg_speed_max = 1.2,
-                                    cl_list = get_caller(self.__sounds_path), 
-                                    cl_volume_min = 2.0, 
-                                    cl_volume_max = 4.0, 
-                                    cl_delay_after_highlight_min = 0.5, 
-                                    cl_delay_after_highlight_max = 0.9,
-                                    h_list = get_sounds_hit(self.__sounds_path), 
-                                    h_volume_min = 5.0, 
-                                    h_volume_max = 6.5,
-                                    cr_list = get_sounds_crowd(self.__sounds_path), 
-                                    cr_volume_min = 1.5, 
-                                    cr_volume_max = 2.2, 
-                                    cr_delay_after_hit_min = 0.6, 
-                                    cr_delay_after_hit_max = 1.3, 
-                                    cr_last_dart_volume_min = 1.1,
-                                    cr_last_dart_volume_max = 1.3)
-
-
-        # try:
-
-        highlight_type = highlight['type']
-        highlight_value = highlight['value']
-
-
         clip = VideoFileClip(record_file_path)
 
         if start < 0:
@@ -320,7 +289,36 @@ class HighlightClipper(threading.Thread):
 
 
 
-        if id == "3":
+        if id == "1":
+
+            v = self.__clip_vars
+            if v == None:
+                v = get_random_clip_vars(z_min = 0.03, 
+                                        z_max = 0.09,
+                                        bg_list = get_sounds_background(self.__sounds_path), 
+                                        bg_volume_min = 0.5, 
+                                        bg_volume_max = 0.5, 
+                                        bg_speed_min = 0.8, 
+                                        bg_speed_max = 1.2,
+                                        cl_list = get_caller(self.__sounds_path), 
+                                        cl_volume_min = 2.0, 
+                                        cl_volume_max = 4.0, 
+                                        cl_delay_after_highlight_min = 0.15, 
+                                        cl_delay_after_highlight_max = 0.3,
+                                        h_list = get_sounds_hit(self.__sounds_path), 
+                                        h_volume_min = 5.0, 
+                                        h_volume_max = 6.5,
+                                        cr_list = get_sounds_crowd(self.__sounds_path), 
+                                        cr_volume_min = 1.5, 
+                                        cr_volume_max = 2.2, 
+                                        cr_delay_after_hit_min = 0.6, 
+                                        cr_delay_after_hit_max = 1.3, 
+                                        cr_last_dart_volume_min = 1.1,
+                                        cr_last_dart_volume_max = 1.3)
+
+            highlight_type = highlight['type']
+            highlight_value = highlight['value']
+
             sounds = []
 
             # BACKGROUND-AUDIO
@@ -381,7 +379,7 @@ class HighlightClipper(threading.Thread):
                     tss = 0
                 if tss > clip.duration:
                     tss = clip.duration
-                self.__printv('Calller-sound at: ' + str(tss), only_debug = True)
+                self.__printv('Caller-sound at: ' + str(tss), only_debug = True)
 
                 sounds.append(call_sound.set_start(tss))
             else:
@@ -415,8 +413,6 @@ class HighlightClipper(threading.Thread):
 
         return highlight_clip
  
-        # except:
-        #      self.__printv('Clip-Generation failed')
 
     def __printv(self, msg, only_debug = False):
         if only_debug == False or (only_debug == True and DEBUG == True):
@@ -448,7 +444,7 @@ class VideoSource(threading.Thread):
             codec = self.__config['ffmpeg-codec']
             id = self.__config['ffmpeg-id']
 
-            self.__printv('Recording started - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path)
+            self.__printv('Recording started - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path + '\r\n')
 
             
             self.__proc = subprocess.Popen(['ffmpeg', '-f', 'dshow', '-video_size', str(w) + 'x' + str(h), '-framerate', str(fps), '-vcodec', str(codec), '-i', 'video=' + str(id), self.__record_path],
@@ -488,7 +484,7 @@ class VideoSource(threading.Thread):
 
             out = cv2.VideoWriter(self.__record_path, fourcc, fps, (w, h))
 
-            self.__printv('Recording started - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path)
+            self.__printv('\r\nRecording started - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path + '\r\n')
             
             ret, frame = cap.read()
             self.__record_started_timestamp = get_timestamp()
@@ -503,7 +499,7 @@ class VideoSource(threading.Thread):
             cap.release()
             out.release()
 
-        self.__printv('Recording stopped - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path)
+        self.__printv('\r\nRecording stopped - ' + 'W: ' + str(w) + ' H: ' + str(h) + ' FPS: ' + str(fps) + ' - Record-path: ' + self.__record_path + '\r\n')
 
             
 
@@ -517,7 +513,7 @@ class VideoSource(threading.Thread):
         return {
             "id": self.__config['id'],
             "name": self.__config['video-name'], 
-            "delay": self.__config['delay'],
+            "delay": self.__config['video-delay'],
             "ts-start": self.__record_started_timestamp,
             "file-path": self.__record_path,
             "file-name": os.path.basename(self.__record_path)
@@ -539,11 +535,14 @@ class AutodartsHighlights(threading.Thread):
         
         self.__config = config        
         self.__record_format = RECORD_FORMAT
+        self.__clip_format = CLIP_FORMAT
         self.__vsis = []
         self.__record_path = None
         self.__init_record = False
         self.__record_state = False
+        self.__processing_state = False
         self.__turn_points = 0
+        self.__last_throw_number = -1
         self.__tt1 = None
         self.__tt2 = None
         self.__tt3 = None
@@ -574,7 +573,7 @@ class AutodartsHighlights(threading.Thread):
                     video_sources = structure["video-sources"]
 
                     for h in highlights:
-                        possible_clip_file_name = get_clip_file_name(h) + CLIP_FORMAT
+                        possible_clip_file_name = get_clip_file_name(h) + self.__clip_format
                         possible_clip_file_path = os.path.join(r['full-path'], possible_clip_file_name)
                         exists = path.exists(possible_clip_file_path)
 
@@ -593,44 +592,61 @@ class AutodartsHighlights(threading.Thread):
         return ret
               
     def analyze_turn(self, turn_points): 
+        self.__printv('Turn ended, points: ' + str(turn_points))
         self.__reset_throw_vars()
-        # self.__printv('Turn ended, points: ' + str(turn_points))
 
     def analyze_throw(self, thrower, throw_number, throw_points, points_left, busted, variant):
         throw_timestamp = get_timestamp()
 
+        throw_number = int(throw_number)
+        throw_points = int(throw_points)
+        points_left = int(points_left)
+        variant = str(variant)
+
         if self.__record_state == True:
+            if variant in SUPPORTED_GAME_VARIANTS:
 
-            if busted == "False":
-                throw_number = int(throw_number)
-                throw_points = int(throw_points)
-                points_left = int(points_left)
+                if throw_number < self.__last_throw_number:
+                    self.__reset_throw_vars()
 
-                self.__turn_points += throw_points
+                if busted == "False":
+                    self.__turn_points += throw_points
 
-                if throw_number == 1:
-                    self.__tt1 = throw_timestamp
-                    self.__tv1 = throw_points
-                elif throw_number == 2:
-                    self.__tt2 = throw_timestamp
-                    self.__tv2 = throw_points
-                elif throw_number == 3:
-                    self.__tt3 = throw_timestamp
-                    self.__tv3 = throw_points
+                    if throw_number == 1:
+                        self.__tt1 = throw_timestamp
+                        self.__tv1 = throw_points
+                    elif throw_number == 2:
+                        self.__tt2 = throw_timestamp
+                        self.__tv2 = throw_points
+                    elif throw_number == 3:
+                        self.__tt3 = throw_timestamp
+                        self.__tv3 = throw_points
 
-                self.__printv('Timestamp: ' + str(throw_timestamp), only_debug = True)
-                self.__printv('Throw-number: ' + str(throw_number), only_debug = True)
-                self.__printv('Turn-points: ' + str(self.__turn_points), only_debug = True)
-                self.__printv('Points-left: ' + str(points_left), only_debug = True)   
+                    self.__printv('\r\nTimestamp: ' + str(throw_timestamp), only_debug = True)
+                    self.__printv('Throw-number: ' + str(throw_number), only_debug = True)
+                    self.__printv('Turn-points: ' + str(self.__turn_points), only_debug = True)
+                    self.__printv('Points-left: ' + str(points_left), only_debug = True)   
 
-                highlight_occured = self.__check_for_highlight_highfinish(variant, thrower, throw_number, points_left)
-                if highlight_occured == False:
-                    self.__check_for_highlight_highscore(variant, thrower, throw_number)
+                    highfinish_occured = self.__check_for_highlight_highfinish(variant, thrower, throw_number, points_left)
+                    if highfinish_occured == False:
+                        self.__check_for_highlight_highscore(variant, thrower, throw_number)
+                
+                if throw_number == 3 or busted == "True" or points_left == 0:
+                    self.__reset_throw_vars()
+
+                self.__last_throw_number = throw_number
+
+                if points_left == 0:
+                    if highfinish_occured == True:
+                        time.sleep(self.__config['highlights-time-offset-after'])
+                    self.__stop_recording()
+                    self.__start_recording()
+
+            else:
+                self.__printv('Variant: ' + variant + ' not supported')
             
-            if throw_number == 3 or busted == "True":
-                self.__reset_throw_vars()
         else:
-            self.__printv('RECORDING IS CURRENTLY STOPPED. PLEASE START IT TO TRACK HIGHLIGHTS')
+            self.__printv('RECORDING IS CURRENTLY STOPPED. PLEASE RESTART APPLICATION')
  
 
     def calibrate(self, record_id, highlight_id, calibration_times):
@@ -660,9 +676,11 @@ class AutodartsHighlights(threading.Thread):
                             highlight_started_timestamp = get_date_time_from_iso_json(h['ts-start'])
                             current_time = (highlight_started_timestamp - recording_started_timestamp).total_seconds()
 
-                            delay = current_time - calibrated_time
-                            if delay < 0:
-                                delay = calibrated_time - current_time
+                            # delay = current_time - calibrated_time
+                            delay = calibrated_time - current_time
+
+                            # if delay < 0:
+                            #     delay = calibrated_time - current_time
 
                             self.__printv(str(delay), only_debug = True)  
                             vs['delay'] = delay
@@ -690,6 +708,8 @@ class AutodartsHighlights(threading.Thread):
           
 
     def generate_clip_manual(self, record_id, clip_id, custom_user, custom_value):
+        self.__processing_state = True
+        
         path_joins = [self.__config['record-path'], record_id, STRUCTURE_FILE_NAME]
         structure_file_path = os.path.join(*path_joins)
 
@@ -701,6 +721,9 @@ class AutodartsHighlights(threading.Thread):
                                             custom_user = custom_user,
                                             custom_value = custom_value)
         highlight_clipper.start()
+        highlight_clipper.join()
+
+        self.__processing_state = False
 
     def remove_recording(self, record_id, clip_id):
         path_joins = [self.__config['record-path'], record_id, STRUCTURE_FILE_NAME]
@@ -713,7 +736,7 @@ class AutodartsHighlights(threading.Thread):
 
             # Exclude highlights
             for hl in file_data["highlights"]:
-                if (get_clip_file_name(hl) + CLIP_FORMAT) != clip_id:
+                if (get_clip_file_name(hl) + self.__clip_format) != clip_id:
                     remaining.append(hl)
             file_data["highlights"] = remaining
 
@@ -729,20 +752,22 @@ class AutodartsHighlights(threading.Thread):
     def get_recording_state(self):
         return self.__record_state
 
+    def get_processing_state(self):
+        return self.__processing_state
+
     def start_recording(self):
         if self.__init_record == False: 
             self.__init_record = True
             self.__start_recording()
 
-    def stop_start_recording(self):
-        self.__stop_recording()
-        self.__start_recording()
-
-    def stop_recording(self): 
+    def stop_recording(self):
+        self.__processing_state = True
         self.__stop_recording()
         for ur in self.__unprocessed_recordings:
             self.__process_finished_recording(ur)
         self.__unprocessed_recordings = []
+        self.__processing_state = False
+        self.__init_record = False
 
 
     def __upload_telegram(self, path_to_clip):
@@ -805,42 +830,42 @@ class AutodartsHighlights(threading.Thread):
         return recordings_disk
 
     def __stop_recording(self):
-        try:
-            # STOP CURRENT RECORDING
-            self.__record_state = False
+        # try:
+        self.__record_state = False
 
-            for vsi in self.__vsis:
-                vsi.stop_recording()
-                vsi.join()
+        # STOP CURRENT RECORDINGS
+        for vsi in self.__vsis:
+            vsi.stop_recording()
+            vsi.join()
 
-            # delete empty recording
-            if self.__highlights == []:
-                try:
-                    shutil.rmtree(self.__record_path)
-                except:
-                    self.__printv("Could not delete empty recording")
+        # delete empty recording
+        if self.__highlights == []:
+            try:
+                shutil.rmtree(self.__record_path)
+            except:
+                self.__printv("Could not delete empty recording")
 
-            # create structure-file
-            else:
-                structure_file_path = os.path.join(self.__record_path, STRUCTURE_FILE_NAME)
-                if not os.path.exists(structure_file_path):
-                    id = path.basename(self.__record_path)
-                    video_source_data = []
-                    for vsi in self.__vsis:
-                        video_source_data.append(vsi.get_data())
-                    data = {"id": id, "video-sources": video_source_data, "highlights": self.__highlights}
-                    with open(structure_file_path, 'w') as outfile:
-                        json.dump(data, outfile, indent = 4, default = json_serial)
+        # create structure-file
+        else:
+            structure_file_path = os.path.join(self.__record_path, STRUCTURE_FILE_NAME)
+            if not os.path.exists(structure_file_path):
+                id = path.basename(self.__record_path)
+                video_source_data = []
+                for vsi in self.__vsis:
+                    video_source_data.append(vsi.get_data())
+                data = {"id": id, "video-sources": video_source_data, "highlights": self.__highlights}
+                with open(structure_file_path, 'w') as outfile:
+                    json.dump(data, outfile, indent = 4, default = json_serial)
 
-                self.__unprocessed_recordings.append(structure_file_path)
-                # TODO: Remove
-                # self.__process_finished_recording(structure_file_path)
+            self.__unprocessed_recordings.append(structure_file_path)
+            # TODO: Remove
+            # self.__process_finished_recording(structure_file_path)
 
-            self.__vsis = []
-            self.__highlights = []
+        self.__vsis = []
+        self.__highlights = []
 
-        except:
-            self.__printv("Could not fully stop recording")
+        # except:
+        #     self.__printv("Could not fully stop recording")
 
     def __start_recording(self):
         try:
@@ -906,6 +931,7 @@ class AutodartsHighlights(threading.Thread):
             return (self.__tt1, self.__tt1)
 
     def __reset_throw_vars(self):
+        self.__printv('\r\nRESET THROW VARS', only_debug = True)
         self.__turn_points = 0
         self.__tt1 = None
         self.__tt2 = None
@@ -942,7 +968,7 @@ class AutodartsHighlights(threading.Thread):
                                             self.__config['highlights-time-offset-before'], 
                                             self.__config['highlights-time-offset-after'])
         highlight_clipper.start()
-        highlight_clipper.join()
+        # highlight_clipper.join()
 
         # TODO: Fix for auto-upload
         # if result_path_to_clip_file != None and self.__config["telegram-automatic-upload"] == True:
@@ -964,19 +990,9 @@ def leg_started():
     autodarts_highlights.start_recording()
     return "200"
 
-@app.route('/leg_ended')
-def leg_ended():
-    autodarts_highlights.stop_start_recording()
-    return "200"
-
 @app.route('/throw/<thrower>/<throw_number>/<throw_points>/<points_left>/<busted>/<variant>')
 def throw(thrower, throw_number, throw_points, points_left, busted, variant):
     autodarts_highlights.analyze_throw(thrower, throw_number, throw_points, points_left, busted, variant)
-    return "200"
-
-@app.route('/turn/<turn_points>')
-def turn(turn_points):
-    autodarts_highlights.analyze_turn(turn_points)
     return "200"
 
 @app.route('/', methods=['GET', 'POST'])
@@ -1014,9 +1030,10 @@ def index():
         
     upload_allowed = autodarts_highlights.get_upload_allowed()
     is_recording = autodarts_highlights.get_recording_state()
+    is_processing = autodarts_highlights.get_processing_state()
     recordings = autodarts_highlights.list_recordings()
 
-    return render_template('index.html', upload = upload_allowed, recording = is_recording, recordings = recordings, unique = str(uuid.uuid1()))
+    return render_template('index.html', upload = upload_allowed, recording = is_recording, processing = is_processing, recordings = recordings, unique = str(uuid.uuid1()))
 
 @app.route('/videos/<record_id>/<video_id>', methods=['GET'])
 def videos(record_id, video_id):

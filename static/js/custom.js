@@ -25,8 +25,12 @@ function set_next_video_source(){
     g_current_video_source_index ++;
 
     vs_id = g_highlight_times[g_current_video_source_index].id;
-    vs_time = g_highlight_times[g_current_video_source_index].time - 3;
+    vs_time = g_highlight_times[g_current_video_source_index].time - 9;
 
+    if(vs_time < 0){
+        console.log('Warning: start time would be out of range: ' + vs_time + ' Starting at 00:00');
+        vs_time = 0.0;
+    }
 
     g_current_video_source_element = document.getElementById(g_record_id + vs_id);
     g_current_video_source_element.currentTime = vs_time;
@@ -49,7 +53,7 @@ function hide_calibration_container(){
 
 function calibrate(){
     g_current_video_source_element.pause();
-    // console.log('Calibrated at: ' + g_current_video_source_element.currentTime);
+    console.log('Calibrated at: ' + g_current_video_source_element.currentTime);
 
     vs_id = g_highlight_times[g_current_video_source_index].id;
     g_highlight_times_calibrated.push({"id": vs_id, "time": g_current_video_source_element.currentTime});
