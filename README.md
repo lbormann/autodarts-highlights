@@ -1,5 +1,7 @@
 # AUTODARTS-HIGHLIGHTS
 
+!!! CURRENTLY NOT UNDER ACTIVE DEVELOPMENT AND MAY BE NON-FUNCTIONAL !!!
+
 Autodarts-highlights is primary an extension to https://github.com/lbormann/autodarts-caller.
 It provides two web-endpoints that are fed by autodarts-caller. Its creates video-highlight-clips based on your opinion what it means to be a worthy clip. 
 
